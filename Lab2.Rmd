@@ -1,0 +1,144 @@
+---
+title: "Lab 2"
+author: "Sofie McComb"
+date: "January 17, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Zip and send this folder to my private computer and try to connect to git
+
+
+#Good examples in the posted papers
+
+#Table in R is a summary of counts
+#Comparing one type against another?
+#Geology vs Radiation?
+#Geology on column and radiation as rows. Can then use mi.empirical on it. 
+#$ instead of square brackets to call the columns
+
+#
+
+
+
+
+What controls land use/land cover pattern in the Santa Ynez Hills and Valley subsection? Landscape theory posits that pattern could vary from one landscape to another and reflect interacting local physical controls, disturbance history and population processes such as plant dispersal.
+Various techniques exist to quantify the spatial relationship between land cover and environmental factors at different scales (Wagner and Fortin 2005). Here you will learn a method known as “mutual information analysis” useful for measuring the association between categorical maps (e.g., association of land use and soil type). The theoretical underpinnings of the technique are described by Phipps (1981) and example applications to landscape analysis include Davis and Dozier (1990) and Ernoult et al. (2003).
+You will be analyzing vegetation pattern in the area covered by the 30 m grid sublandfire30 in your project legend. Here are the steps:
+
+
+1) Generate a random sample of points at which you will collect information on land cover class (subveg), geology (subgeol), flow accumulation (subflocum3c), and winter radiation (subwinrad3). OR, you can use the set of 10,000 random points that I generated using the “Create random points” tool in the Data Management folder of Arc toolbox. The sample locations are already in your map legend as ex2_sample.
+2) The sample points can be used to extract values at those locations from multiple grids (Spatial Analyst folder, Extraction -> Extract Multi Values to Points) The output will be added to the attribute table for your sample points. OR, values already added to ex2_sample. You can open the tables and export the table to your work directory. OR, you can copy the exported table R:\Winter2017\ESM215\data\ex2_sample_data.csv. 
+3) This exercise can be completed using Excel or R, but it is much faster in R. Import the data into R using the function read.csv(). Load the package entropy. From here you can use the function table() to cross-tabulate vegetation and other categorical variables for mutual information analysis. Use mi.empirical() to calculate pairwise mutual information of vegetation with geology, winter radiation and flow accumulation.
+
+
+
+How often flow and hydrology describe radiation
+
+
+What is Mutual information? In a nutshell:
+	a. The spatial heterogeneity (or complexity) of a categorical map can be measured using Shannon's entropy statistic
+H_j= -∑_(j=1)^u▒〖p_j ln (p_j ) 〗
+where pj is the proportion of the map in map class j, j=1,2…u.
+	b. When the area is jointly categorized by two variables x and y (for example vegetation and geology), a more complex map will result unless the variables are perfectly associated. The joint entropy of the combined variables is:
+H(x,y)=-∑_(j=1)^u▒  ∑_(k=1)^v▒p_jk  ln(p_jk )
+where pjk is the proportion of the map where x is in class j and y is in class k. 
+	H(x,y) is maximized when x and y are spatially independent. Conversely, a measure of the strength of association or "mutual information" between two mapped categorical variable is the difference between the maximum and the observed joint entropy.
+	c. For a large sample size N, the mutual information between x and y can be estimated as:
+MI(x,y)=H(x)+H(y)-H(x,y)
+	d. Here we are interested in determining which environmental variables are most strongly associated with vegetation pattern in the study area. Calculate MI for each environmental variable jointly with land cover.
+	e. As explained in Phipps (1981) or Davis and Dozier (1990), identify the variable with the highest I and then stratify the samples based on that variable. Then do one more level of the hierarchy by testing the mutual information of each remaining variable within your strata.
+4) Report your work by answering the following”
+	Summarize your results using a tree diagram like that in the papers.
+	Discuss your results. How strong is the relationship between land cover and physical environmental variables?
+	Compare your findings to those of Davis and Dozier (1990).
+	Summarize the strengths and weaknesses of Mutual Information Analysis for establishing land cover-environment associations? What alternatives would you consider?
+
+
+
+
+
+
+Nicole:
+
+Determine which environmental variables are most strongly associated with vegetation pattern in the study area. Calcuate MI for each environmental variable joinely with land cover
+
+Identiyf highest I and stratify samples based on variable
+
+Most associated with geology???
+Geology is the level one class-figure out how to do that
+Geology is the highest predictor in first level analysis
+Most predicted where veg was occuring
+
+
+```{r}
+library(entropy)
+df<-read.csv("ex2_sample_data.csv", header=TRUE)
+head(df)
+
+#Level 1
+MI_veggeo<-mi.empirical(table(df$subveg15, df$subgeol)) #0.1576834
+MI_vegrad<-mi.empirical(table(df$subveg15, df$subwinrad3)) #0.05126513
+MI_vegflow<-mi.empirical(table(df$subveg15, df$subflocum3)) #0.005416964
+
+#Examine together
+level1_MI_sum<-c(MI_veggeo, MI_vegrad, MI_vegflow)
+names(level1_MI_sum)<-c("Geology", "Radiation", "Flow")
+
+#Geology is the highest predictor as revealed by level 1 analysis
+
+#Level 2
+
+#Look at strata- These are level 2 in each category
+
+geo_strata<-unique(df$subgeol) #1 2 5 6
+flow_strata<-unique(df$subflocum3) #1 2 3
+rad_strata<-unique #1 2 3
+
+#Geology 6 with vegetation and flow
+#Using column 3 geology that equals strata 6
+#using column 6 for vegetation
+#Subset those columns based on where column 3 equals 6 for flow 5
+#Flow
+mi_geo6_vegflow<-mi.empirical(table(df[df[,3]==6,6], df[df[,3]==6,5]))
+mi_geo5_vegflow<-mi.empirical(table(df[df[,3]==5,6], df[df[,3]==5,5]))
+mi_geo2_vegflow<-mi.empirical(table(df[df[,3]==2,6], df[df[,3]==2,5]))
+mi_geo1_vegflow<-mi.empirical(table(df[df[,3]==1,6], df[df[,3]==1,5]))
+
+mi_geo6_vegrad<-mi.empirical(table(df[df[,3]==6,6], df[df[,3]==6,4]))
+mi_geo5_vegrad<-mi.empirical(table(df[df[,3]==5,6], df[df[,3]==5,4]))
+mi_geo2_vegrad<-mi.empirical(table(df[df[,3]==2,6], df[df[,3]==2,4]))
+mi_geo1_vegrad<-mi.empirical(table(df[df[,3]==1,6], df[df[,3]==1,4]))
+
+level2_MI_sumflow<-c(mi_geo6_vegflow,mi_geo5_vegflow, mi_geo2_vegflow, mi_geo1_vegflow)
+level2_MI_sumrad<-c(mi_geo6_vegrad,mi_geo5_vegrad,mi_geo2_vegrad,mi_geo1_vegrad)
+level2_MI_sum<-rbind(level2_MI_sumflow,level2_MI_sumrad)
+rownames(level2_MI_sum)<-c("Flow", "Radition")
+colnames(level2_MI_sum)<-c("6", "5", "2", "1")
+level2_MI_sum
+
+
+#Ignore below
+mi.empirical(table(df[,6], df[,3]))
+table(df[,6], df[,3])#Cross classification of the two maps. How often the join count. By class on rows. 
+#
+table(ex2dat[,3])
+table(ex2dat[,6])
+mi.empirical((table(ex2dat[,6], ex2dat[,3]))) #produces entorpy value-produces mututal info value (look at slide)
+#Looking relatively what the mi value is-the higher the value the higher the assocaition
+entropy(ex2dat[,6])
+entropy(ex2dat[,6])
+ex2dat
+table (ex2dat$subveg15, ex2dat$subwinrad3)
+radiation1_vegflow<-table(ex2dat$subveg15)
+                          ((df$radiation==1, 6), ex2dat(1,5)))
+rad
+
+
+#Figure out how to bracket this
+
+```
+
